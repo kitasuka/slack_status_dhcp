@@ -94,14 +94,24 @@ def team_paid?
   @setting['team_paid']
 end
 
-def admin_token
-  ([@setting['primary_owner']] +
-   @setting['owners'] + @setting['owners']).each { |user_id|
-    if @setting[user_id].key?('user_token')
-      return @setting[user_id]['user_token']
+def admin_token(user_id)
+  admins = []
+  case @setting[user_id]["admin"]
+  when "primary_owner"
+    admins = []
+  when "owner"
+    admins = [@setting['primary_owner']]
+  when "admin"
+    admins = @setting['owners']
+  when nil
+    admins = @setting['admins']
+  end
+  admins.each { |admin_id|
+    if @setting[admin_id].key?('user_token')
+      return @setting[admin_id]['user_token']
     end
   }
-  puts "[ERROR] no admin-user OAuth token"
+  puts "[ERROR] no admin-user OAuth token for user #{user_id}"
   nil
 end
 
@@ -146,7 +156,7 @@ def user_status_set(user_id, status_emoji, status_text, expiration, force = fals
   # user_token: xoxp-...
   user_token = user['user_token']
   if team_paid? && user_token == nil
-    user_token = admin_token
+    user_token = admin_token(user_id)
   end
 
   arguments = {
