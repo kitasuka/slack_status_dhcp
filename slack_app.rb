@@ -293,10 +293,9 @@ def slack_app_command(params)
     logging(['enable', user_id, b].join(' '))
   when 'save_setting', 'delete_setting'
     # [PIPE] save_setting U01UPTBMTH9 {"real_name":"kitasuka",...}
-    user = @setting[user_id]
     json_str = params[2]
     hash = JSON.parse(json_str)
-    user = JSON::Parser.new(json_str).parse
+    @setting[user_id] = JSON::Parser.new(json_str).parse
     logging([cmd, user_id].join(' '))
   when 'setting_file_open', 'setting_file_close'
     puts "[INFO] skip [PIPE] #{cmd} #{params[2]}"

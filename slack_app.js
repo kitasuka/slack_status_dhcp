@@ -322,7 +322,7 @@ let app_home_view_header_blocks = [
     "type": "section",
     "text": {
       "type": "mrkdwn",
-      "text": "*スマホなどが研究室のWi-Fiに接続するとあなたのSlackステータスを:school:滞在（DHCP）に自動更新する．* ステータスの削除は一定時間後．接続時に送信するDHCP DISCOVERメッセージで検出する．"
+      "text": "*スマホなどが研究室のWi-Fiに接続するとあなたのSlackステータスを:school:滞在（DHCP）に自動更新する．* ステータスの有効期限は一時間．接続時に送信するDHCPリクエストメッセージで検出する．"
     }
   },
   {
