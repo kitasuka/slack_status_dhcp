@@ -27,6 +27,7 @@ let app_id;
 let team_id;
 let collaborators_url = 'https://app.slack.com/app-settings/Team ID/App ID/collaborators';
 let install_app_url = 'https://api.slack.com/apps/App ID/install-on-team';
+let source_url = 'https://github.com/kitasuka/slack_status_dhcp';
 
 let standalone; // trueならステータス変更をslack_app.js単独で行う．falseならslack_app.jsからslack_app.rbに依頼する
 
@@ -51,7 +52,8 @@ app.event('user_change', async ({event}) => {
 });
 
 // 設定画面
-app.event('app_home_opened', async ({ event }) => {
+app.event('app_home_opened', async ({ body }) => {
+  let event = body.event;
   let user_id = event.user;
   let tab = event.tab;
   let event_ts = event.event_ts;
@@ -284,7 +286,7 @@ async function users_list() {
 
       await setting_db.push('/', setting)
       console.log('[PIPE] setting_file_close ' + setting_db_fn)
-      console.log('users.list db_data');
+      console.log('users.list setting');
       console.log(setting);
     }
   } catch (error) {
@@ -556,11 +558,12 @@ let app_home_user_setting_blocks = [
       "type": "mrkdwn",
       "text": "\
 自動更新を使うには，「自動更新する」のチェックと研究室のWi-Fiに接続するあなたのスマホのMACアドレス，User OAuth Tokenを「保存」してください．User OAuth Tokenの要否は次のようにワークスペースによって異なります．\n\
-ワークスペースが有料プランの場合には，ワークスペースのプライマリオーナーだけがUser OAuth Token (xoxp-)を保存すれば十分です．このToken使って，他のメンバのステータスを更新することができます．\n\
-ワークスペースが無料プランの場合には，あなたのステータスを変更するためにあなた自身のUser OAuth Token (xoxp-)を保存してください．\n\
+ワークスペースがプロプランの場合には，ワークスペースのプライマリオーナーだけがUser OAuth Token (xoxp-)を保存すれば十分です．このToken使って，他のメンバのステータスを更新することができます．\n\
+ワークスペースがフリープランの場合には，あなたのステータスを変更するためにあなた自身のUser OAuth Token (xoxp-)を保存してください．\n\
 User OAuth Tokenを保存するには，まず，このアプリをインストールした人があなたをこのアプリのCollaboratorに追加してもらいましょう．Collaboratorになったら，あなた自身がこのアプリをワークスペースにインストールできます．インストールするとUser OAuth Tokenが生成されるので上にコピーして保存してください．\n\
 *注意*: このTokenはあなたに代わってワークスペースにアクセスできるので公開してはいけません．\n\
 「削除」を押すと，あなたのMACアドレスとUser OAuth Tokenをこのアプリの設定ファイルから削除します．削除する際は，これに加えて，ワークスペースに対するあなたの許可を無効にする必要があります．無効にするには，この画面の「概要」（または「ワークスペース情報」）から「設定」とたどって，ブラウザでslack app directoryを開き，あなたの許可を「無効にする」を押してください．無効にするとUser OAuth Tokenが無効になります．\n\
+このアプリのソースはGitHubにあります．privateリポジトリかも．\n\
 "
     }}
 ];
@@ -614,7 +617,8 @@ function create_app_home_user_setting_blocks(user_setting, setting) {
   let text = blocks.at(-1).text.text;
   text = text
     .replace('Collaboratorに追加', `<${collaborators_url}|Collaboratorに追加>`)
-    .replace('ワークスペースにインストール', `<${install_app_url}|ワークスペースにインストール>`);
+    .replace('ワークスペースにインストール', `<${install_app_url}|ワークスペースにインストール>`)
+    .replace('ソースはGitHubに', `ソースは<${source_url}|GitHub>に`);
   blocks.at(-1).text.text = text;
   return blocks;
 }

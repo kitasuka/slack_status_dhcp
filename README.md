@@ -1,6 +1,6 @@
 # slack_status_dhcp
-Update slack status using DHCP discover message.
-DHCPディスカバーのメッセージを使って，各ユーザのステータスを自動更新する．
+Update slack status when receiving DHCP request message.
+DHCPリクエストのメッセージを受信したときに，そのユーザのステータスを自動更新する．
 MACアドレス（Wi-Fiアドレス）とSlackユーザを対応させる．
 
 RubyスクリプトとSlackアプリで役割分担する．
@@ -10,6 +10,33 @@ RubyスクリプトとSlackアプリで役割分担する．
 - emoji :school:
 - text 在室（DHCP）
 - expire 1 hour (default)
+
+## 動かす
+Slackワークスペースに新しいアプリを追加し，signing_secretなどをslack_app_token.shに書き写す．
+最初は javaScript だけ動かす．Slackのアプリホームが表示できるようになる．
+表示できたらCtrl+Cなどで止める．
+javaScriptだけでは，「研究室に着いた」などのボタンは押してもステータスは変更されない．
+```
+$ . ./slack_app_token.sh
+$ node slack_app.js
+```
+Rubyスクリプトを実行する．
+Slackのアプリホームで User OAuth Token を保存すると「研究室に着いた」などのボタンが正常に動作する．
+MACアドレスを保存して，自動更新するのチェックをつけると，DHCPリクエストメッセージを受信したときにSlackステータスを変更するようになる．
+自動更新するのチェックを外すとSlackステータスは変更されない．
+バックグランド実行ような工夫はしていないのでターミナルを一つ占有する．
+```
+$ ruby slack_app.rn
+```
+
+## Raspberry Pi 400
+Raspberry Pi OSで動かしたいとき．
+- nodejs を v.12からv.18に更新．
+- rubyでHDCPリクエストのポート67を受信するためにruby2.7に権限を与える
+  ```
+  $ ls -l `which ruby`
+  $ sudo setcap cap_net_raw,cap_net_bind_service+eip /usr/bin/ruby2.7
+  ```
 
 ## やりたいこと（まだできてないこと）
 - 自動更新したときにメッセージを残す．
@@ -67,7 +94,7 @@ on
 ### 使う人全員
 Installed App Settings
 https://api.slack.com/apps/app_id/install-on-team?
-app_idの部分はアプリケーションのID（A04GMTFSBLZなど．Your AppsのApp Credentialsで確認できる）
+app_idの部分はアプリケーションのID（A0.........．Your AppsのApp Credentialsで確認できる）
 
 # インストール作業の記録
 ## MacOSにnodejsをインストールする
@@ -161,11 +188,11 @@ memebers: [{
 
 ### App ID と Team ID をどう取得するか
 app_home_openedイベントの
-evnet.view.team_id: "T01U8TTMP0X"
-evnet.api_app_id: "A04GMTFSBLZ"
+evnet.view.team_id: "T0........."
+evnet.api_app_id: "A0........."
 
 ## RaspberryPi（Debian）でソケットのパーミションを得る．
-すぐに試すならsudoだけど，ごっそりrootで動かすのは気持ち悪い．
+すぐに試すならsudoだけど，rootで動かすのは気持ち悪い．
 ```
 slack_app.rb:xxx:in `bind': Permission denied - bind(2) for "0.0.0.0" port 67 (Errno::EACCES)
 ```
