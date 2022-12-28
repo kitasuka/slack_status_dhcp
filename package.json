@@ -1,0 +1,29 @@
+{
+  "name": "slack_status_dhcp",
+  "version": "1.0.0",
+  "description": "Update slack status using DHCP discover.",
+  "main": "slack_app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kitasuka/slack_status_dhcp.git"
+  },
+  "keywords": [
+    "Slack",
+    "status",
+    "DHCP",
+    "discover"
+  ],
+  "author": "Teruaki Kitasuka",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kitasuka/slack_status_dhcp/issues"
+  },
+  "homepage": "https://github.com/kitasuka/slack_status_dhcp#readme",
+  "dependencies": {
+    "@slack/bolt": "^3.12.2",
+    "node-json-db": "^2.1.3"
+  }
+}
