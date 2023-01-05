@@ -1,7 +1,8 @@
 # slack_status_dhcp
 Update slack status when receiving DHCP request message.
-DHCPリクエストのメッセージを受信したときに，そのユーザのステータスを自動更新する．
-MACアドレス（Wi-Fiアドレス）とSlackユーザを対応させる．
+
+DHCPリクエストメッセージを受信したときに，そのユーザのSlackステータスを自動更新する．
+MACアドレス（Wi-Fiアドレス）とSlackユーザの対応をアプリで設定することで実現する．
 
 RubyスクリプトとSlackアプリで役割分担する．
 設定とステータス監視はアプリで，ステータス変更はスクリプトでする．
@@ -12,14 +13,17 @@ RubyスクリプトとSlackアプリで役割分担する．
 - expire 1 hour (default)
 
 ## 動かす
-Slackワークスペースに新しいアプリを追加し，signing_secretなどをslack_app_token.shに書き写す．
-最初は javaScript だけ動かす．Slackのアプリホームが表示できるようになる．
-表示できたらCtrl+Cなどで止める．
+Slackワークスペースに新しいアプリを追加し，signing_secret, bot_token, slack_app_tokenをslack_app_token.shに書き写す．
+
+動作確認と設定ファイルslack_setting.json生成のため，最初は javaScript だけ動かす．
+Slackのアプリホームが表示できるようになる．
 javaScriptだけでは，「研究室に着いた」などのボタンは押してもステータスは変更されない．
+表示できたらCtrl+Cなどでnodeを止める．
 ```
 $ . ./slack_app_token.sh
 $ node slack_app.js
 ```
+
 Rubyスクリプトを実行する．
 Slackのアプリホームで User OAuth Token を保存すると「研究室に着いた」などのボタンが正常に動作する．
 MACアドレスを保存して，自動更新するのチェックをつけると，DHCPリクエストメッセージを受信したときにSlackステータスを変更するようになる．
@@ -30,8 +34,12 @@ $ ruby slack_app.rb
 ```
 
 ## Raspberry Pi 400
-Raspberry Pi OSで動かしたいとき．
+Raspberry Pi OS Debian version 11 (bullseye) で動かしたいとき．
 - nodejs を v.12からv.18に更新．
+  ```
+  $ curl -fsSL https://deb.nodesource.com/setup_18.x | bash - 
+  $ apt-get install -y nodejs
+  ```
 - rubyでHDCPリクエストのポート67を受信するためにruby2.7に権限を与える
   ```
   $ ls -l `which ruby`
@@ -52,28 +60,26 @@ Raspberry Pi OSで動かしたいとき．
   - ブロードキャストされるDHCPパケットを捕まえて，要求端末に対応する
     Slackユーザのステータスを在室に変更する．在室ステータスの有効期限
     はユーザがSlackアプリで設定した時間にする．規定値は1時間にする．
-  - ステータス変更をSlackのアプリメッセージに通知する．
-  - IPアドレスがわかった場合は定期的にpingを送り，ping応答が一定時間な
+  - (未実装) ステータス変更をSlackのアプリメッセージに通知する．
+  - (未実装) IPアドレスがわかった場合は定期的にpingを送り，ping応答が一定時間な
     ければSlackユーザのステータスを空に変更する．
   - ユーザが自分で変更している場合は変更しない．ユーザが:school:「在室
     （DHCP）」Rubyで指定した時間のいずれかを変更したら，変更しない．ユー
     ザが変更したかはSlackアプリでuser_changeを監視しないと分からない．
 - Slack Boltアプリ:
-  - 端末のMACアドレス（Wi-Fi アドレス）とユーザIDの対応を入力する．
+  - 端末のMACアドレス（Wi-Fi アドレス）とユーザIDの対応を保存する．
   - 在室ステータスの有効時間を設定する．規定値は1時間
-  - user_changeを監視してRubyスクリプトによるステータス変更の可否Ruby
-    スクリプトに知らせる．
+  - user_changeを監視してRubyスクリプトにステータス変更を伝える．
 - アプリからスクリプトへの通知方法
   - ファイル名: slack_users.json
   - アプリは読み書き．
-  - スクリプトは読み取りのみ．
+  - スクリプトは実行開始時に読み取りのみ．その後のステータス変更はアプリからスクリプトにパイプで伝える．
   - node-json-db
 	https://www.npmjs.com/package/node-json-db
-  - アプリで書き込み中にスクリプトが読み込まないようなロックの仕組み必要なはずだけど．．．
 
 ## Slackワークスペースの設定
 ### Socket Mode
-on
+- on
 ### App Home
 - Show Tabs: Home Tab on
 - check: Allow users to send Slash commands and messages from the messages tab
