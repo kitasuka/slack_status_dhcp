@@ -46,11 +46,8 @@ Raspberry Pi OS Debian version 11 (bullseye) で動かしたいとき．
   $ sudo setcap cap_net_raw,cap_net_bind_service+eip /usr/bin/ruby2.7
   ```
 
-## やりたいこと（まだできてないこと）
-- 自動更新したときにメッセージを残す．
+## まだできてないこと
 - 自動更新を使っている人のリストをホームに表示する．
-- メッセージにログを残す．有効・無効の切り替え．設定の保存．ステータス
-  自動更新，アプリの起動・終了．
 - 古い自動更新メッセージを消す．メッセージがある日のうち，直近1週間分を残す．（プライバシ）
 - ユーザ自信が振り返れるように，日毎に入室をまとめたメッセージを送る．
 - 有料プランでUser OAuth Tokenを削除するときに警告する．
@@ -61,7 +58,9 @@ Raspberry Pi OS Debian version 11 (bullseye) で動かしたいとき．
 	リクエスト端末に対応するSlackユーザのステータスを在室に変更する．
 	在室ステータスの有効期限はユーザがSlackアプリで設定した時間にする．
 	規定値は1時間にする．
-  - (未実装) ステータス変更をSlackのアプリメッセージに通知する．
+  - ステータス変更をSlackのアプリメッセージに残す．
+  - メッセージにログを残す．有効・無効の切り替え．設定の保存．ステータス
+    自動更新，アプリの起動・終了．
   - (未実装) IPアドレスがわかった場合は定期的にpingを送り，ping応答が一定時間な
     ければSlackユーザのステータスを空に変更する．
   - ユーザが自分で変更している場合は変更しない．ユーザが:school:「在室
@@ -89,15 +88,17 @@ Raspberry Pi OS Debian version 11 (bullseye) で動かしたいとき．
 - Bot Token Scopes
   - users:read (Slackアプリ users.list, user_change)
   - chat:write (Rubyスクリプト chat.postMessage)
-  - users.profile:read (Rubyスクリプト users.profile.get, User token でも可なAPI)
-  - im:read (Rubyスクリプト conversations.list)
-  - channels:read (Rubyスクリプト conversations.list)
+  - (未使用) users.profile:read (Rubyスクリプト users.profile.get, User token でも可なAPI)
+  - (未使用) im:read (Rubyスクリプト conversations.list)
+  - (未使用) channels:read (Rubyスクリプト conversations.list)
 - User Token Scopes
   - users.profile:write (Rubyスクリプト users.profile.set)
 ### Event Subscriptions
 - bot events
   - app_home_opened
   - user_change (scope users:read)
+- user events
+  no events
 ### 使う人全員
 Installed App Settings
 https://api.slack.com/apps/app_id/install-on-team?

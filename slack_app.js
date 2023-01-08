@@ -55,12 +55,22 @@ app.event('user_change', async ({event}) => {
 app.event('app_home_opened', async ({ body }) => {
   let event = body.event;
   let user_id = event.user;
+  let channel = event.channel;
   let tab = event.tab;
   let event_ts = event.event_ts;
   console.log(`app_home_opened ${user_id} ${tab} at ${event_ts}`);
 
+  // アプリメッセージの送信時にchannel_idが必要なので，Rubyスクリプトに伝える
+  if (setting[user_id].channel == undefined) {
+    console.log('[PIPE] setting_file_open ' + setting_db_fn);
+    console.log('[PIPE] channel ' + user_id + ' ' + channel);
+    setting[user_id].channel = channel;
+    await setting_db.push(`/$user_id}/channel`, channel);
+    console.log('[PIPE] setting_file_close ' + setting_db_fn);
+  }
+  
   // view_publishでteam_idとapp_idを使うので準備．
-  if (app_id == undefined) {
+  if (tab == 'home' && app_id == undefined) {
     team_id = event.view.team_id;
     app_id = event.view.app_id;
     collaborators_url = collaborators_url
@@ -311,7 +321,7 @@ function omitted_profile(profile) {
   console.log('Slack Bolt logLevel: ' + app.logLevel);
   standalone = (process.env.SLACK_JS_STANDALONE == 'true' ? true : false);
   console.log('JavaSript standalone: ' + standalone);
-  users_list();
+  await users_list();
 })();
 
 let app_home_view = {
@@ -560,7 +570,7 @@ let app_home_user_setting_blocks = [
 自動更新を使うには，「自動更新する」のチェックと研究室のWi-Fiに接続するあなたのスマホのMACアドレス，User OAuth Tokenを「保存」してください．User OAuth Tokenの要否は次のようにワークスペースによって異なります．\n\
 ワークスペースがプロプランの場合には，ワークスペースのプライマリオーナーだけがUser OAuth Token (xoxp-)を保存すれば十分です．このToken使って，他のメンバのステータスを更新することができます．\n\
 ワークスペースがフリープランの場合には，あなたのステータスを変更するためにあなた自身のUser OAuth Token (xoxp-)を保存してください．\n\
-User OAuth Tokenを保存するには，まず，このアプリをインストールした人があなたをこのアプリのCollaboratorに追加してもらいましょう．Collaboratorになったら，あなた自身がこのアプリをワークスペースにインストールできます．インストールするとUser OAuth Tokenが生成されるので上にコピーして保存してください．\n\
+User OAuth Tokenを保存するには，まず，このアプリをインストールした人にお願いして，あなたをこのアプリのCollaboratorに追加してもらいましょう．Collaboratorになったら，あなた自身がこのアプリをワークスペースにインストールできます．インストールするとUser OAuth Tokenが生成されるので上にコピーして保存してください．\n\
 *注意*: このTokenはあなたに代わってワークスペースにアクセスできるので公開してはいけません．\n\
 「削除」を押すと，あなたのMACアドレスとUser OAuth Tokenをこのアプリの設定ファイルから削除します．削除する際は，これに加えて，ワークスペースに対するあなたの許可を無効にする必要があります．無効にするには，この画面の「概要」（または「ワークスペース情報」）から「設定」とたどって，ブラウザでslack app directoryを開き，あなたの許可を「無効にする」を押してください．無効にするとUser OAuth Tokenが無効になります．\n\
 このアプリのソースはGitHubにあります．privateリポジトリかも．\n\
@@ -602,7 +612,8 @@ function create_app_home_user_setting_blocks(user_setting, setting) {
       }
     }
   }
-  if (setting.team_paid && user_setting.admin == undefined &&
+  if (setting.team_paid &&
+      (user_setting.admin == undefined || user_setting.admin == 'admin') &&
       user_setting.user_token == undefined) { // blocks[4] user_token の削除（後ろの順番が変わるので削除は最後にする）
     /* blocks[4] input_user_token を表示するのは次の3種類のユーザ
        - 有料プランではadminユーザ

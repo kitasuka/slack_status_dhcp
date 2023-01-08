@@ -74,7 +74,10 @@ def slack_api_post(api_method, arguments, token)
     {'Authorization' => 'Bearer ' + token,
      'Content-type' => 'application/json; charset=UTF-8'})
   body = JSON.parse(response.body)
-  if @debug
+  if ! body['ok'] # API呼び出し失敗
+    puts ['[ERROR]', api_method, 'token:', token[0..4], 'HTTP-response:', response.code, arguments.to_json].join(' ')
+    puts body
+  elsif @debug
     puts [api_method, 'token:', token[0..4], 'HTTP-response:', response.code, arguments.to_json].join(' ')
     puts body
   end
@@ -149,6 +152,7 @@ def user_status_set(user_id, status_emoji, status_text, expiration, force = fals
     # ユーザが手動で設定したステータスは上書きしない
     if @manually_changed[user_id]
       puts "[INFO] user_status_set user '#{user_id}' set status manually"
+      slack_chat_postMessage(user['channel'], 'DHCPリクエストを受信しましたが，独自のステータスが設定されているためステータスを自動更新しませんでした')
       return
     end
   end
@@ -170,7 +174,7 @@ def user_status_set(user_id, status_emoji, status_text, expiration, force = fals
     arguments['user'] = user_id
   end
   slack_api_post('users.profile.set', arguments, user_token)
-  @manually_changed[user_id] = true
+  # @manually_changed[user_id] = true
   logging(['users.profile.set', arguments].join(' '))
 end
 
@@ -259,6 +263,12 @@ def parse_DHCP_request_message(msg, print = false)
    giaddr, chaddr, sname, file, options]
 end
 
+def slack_chat_postMessage(channel, text)
+  arguments = {'channel' => channel,
+               'text' => text}
+  slack_api_post('chat.postMessage', arguments, @botToken)
+end
+
 def slack_app_command(params)
   cmd = params.first
   user_id = params[1] # U01UPTBMTH9
@@ -268,14 +278,20 @@ def slack_app_command(params)
     status_text, expiration = get_status_setting(user_id)
     logging('user_status_set arrive ' + user_id)
     user_status_set(user_id, StatusEmoji, status_text, expiration, true)
+    user = @setting[user_id]
+    slack_chat_postMessage(user['channel'], '研究室に着いた（手動更新）')
   when 'will_arrive'
     # [PIPE] will_arrive U01UPTBMTH9
     expiration = get_status_setting(user_id).last
     logging('user_status_set will_arrive ' + user_id)
     user_status_set(user_id, StatusEmoji, StatusTextWillArrive, expiration, true)
+    user = @setting[user_id]
+    slack_chat_postMessage(user['channel'], 'もうすぐ着く（手動更新）')
   when 'departure'
     logging('user_status_set departure ' + user_id)
     user_status_set(user_id, '', '', 0, true)
+    user = @setting[user_id]
+    slack_chat_postMessage(user['channel'], '研究室を離れる（手動更新）')
   when 'user_change', 'user_list'
     h = JSON.parse(params[2])
     status_text = h['status_text']
@@ -287,6 +303,10 @@ def slack_app_command(params)
     elsif status_expiration == 0 && status_emoji == '' && status_text == '' # 空
       @manually_changed[user_id] = false
     else # それ以外，ユーザ設定
+      # if @manually_changed[user_id] != true
+      #   user = @setting[user_id]
+      #   slack_chat_postMessage(user['channel'], '独自のステータスが設定されたのでDHCPによる自動更新を停止します')
+      # end
       @manually_changed[user_id] = true
     end
     puts "[INFO] #{cmd} #{user_id} #{@manually_changed[user_id] ? 'manual' : 'auto'}. " +
@@ -297,18 +317,31 @@ def slack_app_command(params)
     b = params[2]
     if b == 'true'
       user['enable'] = true
+      slack_chat_postMessage(user['channel'], '自動更新する')
     else
       user['enable'] = false
+      slack_chat_postMessage(user['channel'], '自動更新しない')
     end
     logging(['enable', user_id, b].join(' '))
   when 'save_setting', 'delete_setting'
     # [PIPE] save_setting U01UPTBMTH9 {"real_name":"kitasuka",...}
     json_str = params[2]
     hash = JSON.parse(json_str)
-    @setting[user_id] = JSON::Parser.new(json_str).parse
+    @setting[user_id] = hash # JSON::Parser.new(json_str).parse
     logging([cmd, user_id].join(' '))
+    user = @setting[user_id]
+    if cmd == 'save_setting'
+      slack_chat_postMessage(user['channel'], "設定保存 MACアドレス #{hash['mac_address']}")
+    else
+      slack_chat_postMessage(user['channel'], '設定削除')
+    end
   when 'setting_file_open', 'setting_file_close'
     puts "[INFO] skip [PIPE] #{cmd} #{params[2]}"
+  when 'channel'
+    # [PIPE] channel #{user_id} #{channel}
+    user = @setting[user_id]
+    channel = params[2]
+    user['channel'] = channel
   else
     puts "[ERROR] unknown slack_app_command [PIPE] #{params.join(' ')}"
   end
@@ -343,6 +376,7 @@ def dhcp_request_thread(chaddr)
       if user['mac_address'].downcase == chaddrstr
         status_text, expiration = get_status_setting(user_id)        
         logging(['user_status_set DHCP request', user_id].join(' '))
+        slack_chat_postMessage(user['channel'], '研究室に着いた（DHCP）')
         user_status_set(user_id, StatusEmoji, status_text, expiration)
       end
     }
