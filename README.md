@@ -13,14 +13,14 @@ RubyスクリプトとSlackアプリで役割分担する．
 - expire 1 hour (default)
 
 ## 動かす
-Slackワークスペースに新しいアプリを追加し，signing_secret, bot_token, slack_app_tokenをslack_app_token.shに書き写す．
+Slackワークスペースに新しいアプリを追加し，signing_secret, bot_token, slack_app_tokenをslack_app_token.shに書き写す．アプリ追加の詳しい手順は InstallSlackApp.md にある．
 
 動作確認と設定ファイルslack_setting.json生成のため，最初は javaScript だけ動かす．
 Slackのアプリホームが表示できるようになる．
 javaScriptだけでは，「研究室に着いた」などのボタンは押してもステータスは変更されない．
 表示できたらCtrl+Cなどでnodeを止める．
 ```
-$ . ./slack_app_token.sh
+$ . ./env.sh
 $ node slack_app.js
 ```
 
