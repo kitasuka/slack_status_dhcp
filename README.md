@@ -12,6 +12,8 @@ RubyスクリプトとSlackアプリで役割分担する．
 - text 在室（DHCP）
 - expire 1 hour (default)
 
+![App Home](AppHome.png)
+
 ## 動かす
 Slackワークスペースに新しいアプリを追加し，signing_secret, bot_token, slack_app_tokenをslack_app_token.shに書き写す．アプリ追加の詳しい手順は InstallSlackApp.md にある．
 
