@@ -66,7 +66,7 @@ app.event('app_home_opened', async ({ body }) => {
     console.log('[PIPE] setting_file_open ' + setting_db_fn);
     console.log('[PIPE] channel ' + user_id + ' ' + channel);
     setting[user_id].channel = channel;
-    await setting_db.push(`/$user_id}/channel`, channel);
+    await setting_db.push(`/${user_id}/channel`, channel);
     console.log('[PIPE] setting_file_close ' + setting_db_fn);
   }
   
