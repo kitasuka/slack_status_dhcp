@@ -1,8 +1,9 @@
 # slack_status_dhcp
 Update slack status when receiving DHCP request message.
 
-DHCPリクエストメッセージを受信したときに，そのユーザのSlackステータスを自動更新する．
+スマホなどからのDHCPリクエストメッセージを受信したときに，そのスマホユーザのSlackステータスを自動更新する．
 MACアドレス（Wi-Fiアドレス）とSlackユーザの対応をアプリで設定することで実現する．
+研究室に来たときにSlackのユーザステータスの変更を自動化しようと作った．
 
 RubyスクリプトとSlackアプリで役割分担する．
 設定とステータス監視はアプリで，ステータス変更はスクリプトでする．
@@ -14,10 +15,12 @@ RubyスクリプトとSlackアプリで役割分担する．
 
 <img src="AppHome.png" alt="Screen shot of App Home" width="200">
 
-## 動かす
+## アプリを動かす
 Slackワークスペースに新しいアプリを追加し，signing_secret, bot_token, slack_app_tokenをslack_app_token.shに書き写す．アプリ追加の詳しい手順は InstallSlackApp.md にある．
 
-ターミナルを開き，signing_secretなどを環境変数にセットする．
+DHCPリクエストが受信でき，常時動作しているPCを用意し以下の準備をする．
+
+PCのターミナルを開き，signing_secretなどを環境変数にセットする．
 ```
 $ . ./env.sh
 ```
@@ -41,6 +44,19 @@ $ . ./env.sh # やってないときだけ必要．2度実行しても問題な�
 $ ruby slack_app.rb
 ```
 
+## アプリのユーザの使い方
+ワークスペースがプロプラン（有料プラン）かフリープランかを選択する．
+アプリのホーム画面を開き，スマホのMACアドレス，User OAuth Tokenを入力して，保存する．
+自動設定するステータスのテキストと自動設定したステータスを削除するまでの時間は好みで変更する．
+
+動作確認：スマホのWi-FiをOFF -> ONにするとDHCPリクエストが出るので，そのタイミングでSlackユーザステータスが切り替われば，正常に動作している．
+
+普段の使い方：スマホのWi-FiをONにしたまま研究室にくる．
+1時間以上いる予定があればSlackアプリで自身のステータスの有効時間を変更する．有効時間は「次の時間経過後にステータスを削除」の項目で変更できる．
+
+プロプラン（有料プラン）の場合は，ワークスペースのプライマリオーナーのみがUser OAuth Tokenを登録すれば，
+他のユーザは登録する必要はない．
+
 ## Raspberry Pi 400
 Raspberry Pi OS Debian version 11 (bullseye) で動かしたいとき．
 - nodejs を v.12からv.18に更新．
@@ -48,7 +64,7 @@ Raspberry Pi OS Debian version 11 (bullseye) で動かしたいとき．
   $ curl -fsSL https://deb.nodesource.com/setup_18.x | bash - 
   $ apt-get install -y nodejs
   ```
-- rubyでHDCPリクエストのポート67を受信するためにruby2.7に権限を与える
+- rubyでDHCPリクエストのポート67を受信するためにruby2.7に権限を与える
   ```
   $ ls -l `which ruby`
   $ sudo setcap cap_net_raw,cap_net_bind_service+eip /usr/bin/ruby2.7
@@ -60,6 +76,7 @@ Raspberry Pi OS Debian version 11 (bullseye) で動かしたいとき．
 - ユーザ自信が振り返れるように，日毎に入室をまとめたメッセージを送る．
 - 有料プランでUser OAuth Tokenが不要な人のホーム画面にUser OAuth Tokenの入力フィールドを表示しない．
 - 有料プランでUser OAuth Tokenを削除するときに警告する．
+- IPアドレスを調べてping応答で在室状況を確認し続ける．
 
 ## 役割分担
 - Rubyスクリプト:
