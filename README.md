@@ -17,13 +17,18 @@ RubyスクリプトとSlackアプリで役割分担する．
 ## 動かす
 Slackワークスペースに新しいアプリを追加し，signing_secret, bot_token, slack_app_tokenをslack_app_token.shに書き写す．アプリ追加の詳しい手順は InstallSlackApp.md にある．
 
-動作確認と設定ファイルslack_setting.json生成のため，最初は javaScript だけ動かす．
+ターミナルを開き，signing_secretなどを環境変数にセットする．
+```
+$ . ./env.sh
+```
+
+初回のみ，動作確認と設定ファイルslack_setting.json生成のため，javaScript だけ動かす．
 Slackのアプリホームが表示できるようになる．
 javaScriptだけでは，「研究室に着いた」などのボタンは押してもステータスは変更されない．
 表示できたらCtrl+Cなどでnodeを止める．
 ```
-$ . ./env.sh
 $ node slack_app.js
+（しばらく待って Ctrl+C で停止）
 ```
 
 Rubyスクリプトを実行する．
@@ -32,6 +37,7 @@ MACアドレスを保存して，自動更新するのチェックをつける�
 自動更新するのチェックを外すとSlackステータスは変更されない．
 バックグランド実行ような工夫はしていないのでターミナルを一つ占有する．
 ```
+$ . ./env.sh # やってないときだけ必要．2度実行しても問題ない．
 $ ruby slack_app.rb
 ```
 
@@ -106,8 +112,8 @@ Installed App Settings
 https://api.slack.com/apps/app_id/install-on-team?
 app_idの部分はアプリケーションのID（A0.........．Your AppsのApp Credentialsで確認できる）
 
-# インストール作業の記録
-## MacOSにnodejsをインストールする
+# 個人的なメモ．インストール作業の記録
+## macOSにnodejsをインストールする
 ```ターミナル
 % brew install node
 % brew info node
@@ -153,21 +159,20 @@ https://slack.dev/bolt-js/ja-jp/concepts#publishing-views
   - error: not_admin
 - users.list API. Required scopes Bot tokens or User token, users:read
 
-## node-json-dbファイルのロック
-パイプでつなぐのが無難そう．
-nodejsをRubyのサブプロセスにしてnodejsの標準出力でRubyスクリプトに通知する？
-Nodejs Child Process
-https://nodejs.org/docs/latest-v17.x/api/child_process.html
+## node-json-dbファイルをnodeとrubyの両方からアクセスする
+nodejsをRubyのサブプロセスにしてnodejsの標準出力でRubyスクリプトにnode-json-dbの変更内容を通知することにした．
+つまり，ファイルの内容はnodejsからRubyへの一方通行．
+ファイルはnodejsが読み書きする．Rubyスクリプトは起動時に読み込み，変更内容はパイプで受け取る．そのため，排他制御は要らない．
 
-名前付きパイプもいいかも?
-あるいは，db.pushの前にロックファイルを作成して終わったら削除してその場しのぎするか．
-```
-await db.push("/test2/my/test/",10,false);
-```
-あるいは，どうせまれなので，スクリプト側でJSON構文のエラーを見つけたら再読み込みする．
-あるいは，nodejsの子プロセスを使う？
-If Node.js is spawned with an IPC channel,
-https://nodejs.org/docs/latest-v17.x/api/child_process.html#asynchronous-process-creation
+以下も検討したけど，使わなかった．
+- Nodejs Child Process
+  https://nodejs.org/docs/latest-v17.x/api/child_process.html
+- 名前付きパイプもいいかも?
+- db.pushの前にロックファイルを作成して終わったら削除してその場しのぎするか．
+  ```
+  await db.push("/test2/my/test/",10,false);
+  ```
+- あるいは，どうせまれなので，スクリプト側でJSON構文のエラーを見つけたら再読み込みする．
 
 ## 二つのトークン
 BoltはbotTokenだけでなんとかなる．
