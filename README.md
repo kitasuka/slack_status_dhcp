@@ -97,7 +97,7 @@ Raspberry Pi OS Debian version 11 (bullseye) で動かしたいとき．
   - 在室ステータスの有効時間を設定する．規定値は1時間
   - user_changeを監視してRubyスクリプトにステータス変更を伝える．
 - アプリからスクリプトへの通知方法
-  - ファイル名: slack_users.json
+  - ファイル名: slack_.json
   - アプリは読み書き．
   - スクリプトは実行開始時に読み取りのみ．その後のステータス変更はアプリからスクリプトにパイプで伝える．
   - node-json-db
