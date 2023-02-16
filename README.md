@@ -71,6 +71,24 @@ Raspberry Pi OS Debian version 11 (bullseye) で動かしたいとき．
   ```
 
 ## まだできてないこと
+- nodejsからrubyへのパイプの異常でnodejsが終了することがある．
+  ```
+  node:events:491
+        throw er; // Unhandled 'error' event
+        ^
+  
+  Error: write EPIPE
+      at afterWriteDispatched (node:internal/stream_base_commons:160:15)
+      at writeGeneric (node:internal/stream_base_commons:151:3)
+      at Socket._writeGeneric (node:net:917:11)
+      at Socket._write (node:net:929:8)
+      at writeOrBuffer (node:internal/streams/writable:392:12)
+      at _write (node:internal/streams/writable:333:10)
+      at Writable.write (node:internal/streams/writable:337:10)
+      at console.value (node:internal/console/constructor:300:16)
+      at console.log (node:internal/console/constructor:377:26)
+      at /home/fcs/slack_status_dhcp/slack_app.js:62:11
+  ```
 - 自動更新を使っている人のリストをホームに表示する．
 - 古い自動更新メッセージを消す．メッセージがある日のうち，直近1週間分を残す．（プライバシ）
 - ユーザ自信が振り返れるように，日毎に入室をまとめたメッセージを送る．
